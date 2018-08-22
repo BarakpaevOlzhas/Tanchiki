@@ -136,7 +136,17 @@ class enemy : virtual object {
 	int storona;
 	static int live;
 	bool living;
-	bool existing;
+	bool existing;	
+	static int ram[20][20];
+	int map_of_the_area_in_memory[20][20];
+	void Strart_ram() {
+		for (int i = 0; i < 20; i++) {
+			for (int j = 0; j < 20; j++) {
+				ram[i][j] = 0;
+				map_of_the_area_in_memory[i][j] = 0;
+			}
+		}
+	}
 public:
 	void save_e(string name) {
 		ofstream file_e_w(name, ios::binary);
@@ -148,6 +158,8 @@ public:
 		file_e_w.write((char*)this->Type2, sizeof(char));
 		file_e_w.write((char*)this->Type3, sizeof(char));
 		file_e_w.write((char*)this->Type4, sizeof(char));
+		file_e_w.write((char*)this->ram, sizeof(this->ram));
+		file_e_w.write((char*)this->map_of_the_area_in_memory, sizeof(this->map_of_the_area_in_memory));
 		file_e_w.write((char*)&this->storona, sizeof(this->storona));
 		file_e_w.write((char*)&this->live, sizeof(this->live));
 		file_e_w.write((char*)&this->living, sizeof(this->living));
@@ -166,6 +178,8 @@ public:
 		file_e_r.read((char*)this->Type2, sizeof(char));
 		file_e_r.read((char*)this->Type3, sizeof(char));
 		file_e_r.read((char*)this->Type4, sizeof(char));
+		file_e_r.read((char*)this->ram, sizeof(this->ram));
+		file_e_r.read((char*)this->map_of_the_area_in_memory, sizeof(this->map_of_the_area_in_memory));
 		file_e_r.read((char*)&this->storona, sizeof(this->storona));
 		file_e_r.read((char*)&this->live, sizeof(this->live));
 		file_e_r.read((char*)&this->living, sizeof(this->living));
@@ -173,6 +187,37 @@ public:
 		file_e_r.read((char*)&this->posX, sizeof(this->posX));
 		file_e_r.read((char*)&this->posY, sizeof(this->posY));
 		file_e_r.close();
+	}
+	
+	void setRam(int i,int j,int l) {
+		this->ram[i][j] = l;
+	}
+	int getMemory(int i ,int j) {
+		return this->ram[i][j];
+	}
+	void setmap_of_the_area_in_memory(int i,int j,int l) {
+		this->map_of_the_area_in_memory[i][j] = l;
+	}
+	void delete_map_of_the_area_in_memory() {
+		for (int i = 0; i < 20;i++) {
+			for (int j = 0; j < 20; j++) {
+				this->map_of_the_area_in_memory[i][j] == 0;
+			}
+		}
+	}
+	void deadlock(int i,int j) {
+		this->map_of_the_area_in_memory[i][j] = 0;
+		if (this->map_of_the_area_in_memory[i + 1][j] == 4)setmap_of_the_area_in_memory(i + 1, j,0);
+		if (this->map_of_the_area_in_memory[i - 1][j] == 4)setmap_of_the_area_in_memory(i - 1, j,0);
+		if (this->map_of_the_area_in_memory[i][j + 1] == 4)setmap_of_the_area_in_memory(i, j + 1,0);
+		if (this->map_of_the_area_in_memory[i][j - 1] == 4)setmap_of_the_area_in_memory(i, j - 1,0);
+		if (this->map_of_the_area_in_memory[i + 1][j] == 2 )deadlock(i + 1, j);
+		if (this->map_of_the_area_in_memory[i - 1][j] == 2 )deadlock(i - 1, j);
+		if (this->map_of_the_area_in_memory[i][j + 1] == 2 )deadlock(i, j + 1);
+		if (this->map_of_the_area_in_memory[i][j - 1] == 2 )deadlock(i, j - 1);
+	}
+	int getMap_of_the_area_in_memory(int i, int j) {
+		return this->map_of_the_area_in_memory[i][j];
 	}
 	void switchExisting(){
 		if (existing)existing = !existing;
@@ -260,12 +305,12 @@ public:
 			}
 		}
 	}
-	enemy() :object() { existing = 0; living = 1; setPos(35, 90); this->obres(); this->Levo(); this->Vniz(); this->Pravo(); storona = 0; }
+	enemy() :object() { Strart_ram(); existing = 0; living = 1; setPos(35, 90); this->obres(); this->Levo(); this->Vniz(); this->Pravo(); storona = 0; }
 
-	void deadÕ() {
+	void deadХ() {
 		if (living)living = !living;		
 	}
-	void reverdeadÕ() {
+	void reverdeadХ() {
 		if (!living)living = true;
 	}
 	bool getLiving() {
@@ -324,10 +369,11 @@ public:
 				SetColor(07);
 			}
 		}
-	}
+	}	
 };
 
 int enemy::live = 10;
+int enemy::ram[20][20];
 
 class Blok :virtual object {
 public:	
@@ -519,11 +565,7 @@ class Player_Tank : object {
 	int storona;
 	static int live;
 	bool living;
-public:
-	/*void save_t(string name){
-		ofstream file_PT_w(name, ios::binary);
-		file_PT_w.write((char*)this, sizeof(Player_Tank));
-	}*/
+public:	
 	void save_pt(string name) {
 		ofstream file_pt_w(name, ios::binary);
 		file_pt_w.write((char*)this->Color, sizeof(int));
@@ -745,6 +787,7 @@ private:
 	int posX2, posY2;
 	int posX3, posY3;
 	int posX4, posY4;
+	int mode;
 	time_t year[5];
 	time_t day[5];
 	time_t month[5];
@@ -760,96 +803,9 @@ private:
 	int getMonth(int i) {
 		if (i >= 0 && i < 5) return month[i];
 	}
-	void save_menu(Player_Tank &pt,enemy &e1, enemy &e2, enemy &e3, enemy &e4, int nu) {
-		system("cls");
-		time_t t = time(0);
-		struct tm * now = localtime(&t);
-		int key;
-		int choise = 0;
-		start(1000, 1000, 15, 20);
-		for (int i = 0; i < 5;i++) {
-			SetPos(5 + 15 * i, 5); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219);
-			SetPos(5 + 15 * i, 5 + 1); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-			SetPos(5 + 15 * i, 5 + 2); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-			SetPos(5 + 15 * i, 5 + 3); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-			SetPos(5 + 15 * i, 5 + 4); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-			SetPos(5 + 15 * i, 5 + 5); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-			SetPos(5 + 15 * i, 5 + 6); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-			SetPos(5 + 15 * i, 5 + 7); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-			SetPos(5 + 15 * i, 5 + 8); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-			SetPos(5+ 15 * i, 5 + 9); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219);
-			SetPos(5 + 15 * i, 5 + 10); SetColor(i == 0 ? 0x0A : 0x0C); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219); SetColor(0x07);
-			SetPos(5 + 15 * i, 5 + 11); SetColor(i == 0 ? 0x0A : 0x0C); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219); SetColor(0x07);
-			SetPos(5 + 15 * i + 3, 5 + 3); cout << this->getDay(i) << "." << this->getMonth(i) << "." << this->getYear(i);
-			SetPos(5 + 15 * i + 3, 5 + 5); cout << this->hour[i] << "." << this->minute[i] << "." << this->second[i];
-		}
-		while (1) {
-			if (_kbhit()) {
-				key = _getch();
-				if (key == 75) {
-					if (choise != 0) choise--;
-					else choise = 4;
-				}
-				else if (key == 77) {
-					if (choise != 4) choise++;
-					else choise = 0;
-				}
-				else if (key == 13) {
-					if (choise == 0 && nu == 1) {
-						this->day[0] = now->tm_mday; this->month[0] = now->tm_mon + 1; this->year[0] = now->tm_year + 1900; this->second[0] = now->tm_sec; this->minute[0] = now->tm_min; this->hour[0] = now->tm_hour;
-						this->saveGame("0.g.", pt, e1, e2, e3, e4); 
-					}
-					else if (choise == 1 && nu == 1) {
-						this->day[1] = now->tm_mday; this->month[1] = now->tm_mon; this->year[1] = now->tm_year; this->second[1] = now->tm_sec; this->minute[1] = now->tm_min; this->hour[1] = now->tm_hour;
-						this->saveGame("1.g.", pt, e1, e2, e3, e4);
-					}
-					else if (choise == 2 && nu == 1) {
-						this->day[2] = now->tm_mday; this->month[2] = now->tm_mon; this->year[2] = now->tm_year; this->second[2] = now->tm_sec; this->minute[2] = now->tm_min; this->hour[2] = now->tm_hour;
-						this->saveGame("2.g.", pt, e1, e2, e3, e4);
-					}
-					else if (choise == 3 && nu == 1) {
-						this->day[3] = now->tm_mday; this->month[3] = now->tm_mon; this->year[3] = now->tm_year; this->second[3] = now->tm_sec; this->minute[3] = now->tm_min; this->hour[3] = now->tm_hour;
-						this->saveGame("3.g.", pt, e1, e2, e3, e4);
-					}
-					else if (choise == 4 && nu == 1) {
-						this->day[4] = now->tm_mday; this->month[4] = now->tm_mon; this->year[4] = now->tm_year; this->second[4] = now->tm_sec; this->minute[4] = now->tm_min; this->hour[4] = now->tm_hour;
-						this->saveGame("4.g.", pt, e1, e2, e3, e4);
-					}
-					if (choise == 0 && nu == 0) this->download_game("0.g.", pt, e1, e2, e3, e4);
-					else if (choise == 1 && nu == 0) this->download_game("1.g.", pt, e1, e2, e3, e4);
-					else if (choise == 2 && nu == 0) this->download_game("2.g.", pt, e1, e2, e3, e4);
-					else if (choise == 3 && nu == 0) this->download_game("3.g.", pt, e1, e2, e3, e4);
-					else if (choise == 4 && nu == 0) this->download_game("4.g.", pt, e1, e2, e3, e4);
-				}
-				else if (key == 27) {
-					break;
-				}
-
-				for (int i = 0; i < 5; i++) {
-					SetPos(5 + 15 * i, 5); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219);
-					SetPos(5 + 15 * i, 5 + 1); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-					SetPos(5 + 15 * i, 5 + 2); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-					SetPos(5 + 15 * i, 5 + 3); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-					SetPos(5 + 15 * i, 5 + 4); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-					SetPos(5 + 15 * i, 5 + 5); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-					SetPos(5 + 15 * i, 5 + 6); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-					SetPos(5 + 15 * i, 5 + 7); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-					SetPos(5 + 15 * i, 5 + 8); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
-					SetPos(5 + 15 * i, 5 + 9); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219);
-					SetPos(5 + 15 * i, 5 + 10); SetColor(i == choise ? 0x0A : 0x0C); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219); SetColor(0x07);
-					SetPos(5 + 15 * i, 5 + 11); SetColor(i == choise ? 0x0A : 0x0C); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219); SetColor(0x07);
-					SetPos(5 + 15 * i + 3, 5 + 3); cout << this->getDay(i) << "." << this->getMonth(i) << "." << this->getYear(i);
-					SetPos(5 + 15 * i + 3, 5 + 5); cout << this->hour[i] << "." << this->minute[i] << "." << this->second[i];
-				}
-
-			}
-		}
-		start(1000, 1000, 5, 4);
-	}
-	void saveGame(string name,Player_Tank &pt, enemy &e1, enemy &e2, enemy &e3, enemy &e4) {		
-		ofstream file_Map_w(name, ios::binary);
-		file_Map_w.write((char*)this, sizeof(Map));
-		file_Map_w.close();
+	
+	void saveGame(string name,Player_Tank &pt, enemy &e1, enemy &e2, enemy &e3, enemy &e4) {			
+		this->save_Bin_not_name(name);
 		name += '1';
 		pt.save_pt(name);
 		name += '2';
@@ -862,10 +818,8 @@ private:
 		e4.save_e(name);		
 		system("cls");		
 	}
-	void download_game(string name,Player_Tank &pt, enemy &e1, enemy &e2, enemy &e3, enemy &e4 ) {
-		ifstream file_Map_r(name, ios::binary);
-		file_Map_r.read((char*)this, sizeof(Map));
-		file_Map_r.close();
+	void download_game(string name,Player_Tank &pt, enemy &e1, enemy &e2, enemy &e3, enemy &e4 ) {	
+		this->download_Bin(name,0);
 		name += '1';
 		pt.download_pt(name);
 		name += '2';
@@ -1190,7 +1144,7 @@ private:
 				else if (Color_Map[i][j] == 10) SetColor(0x0A);
 				else if (Color_Map[i][j] == 7) SetColor(0x07);
 				else if (Color_Map[i][j] == 0) SetColor(0x00);
-				else if (Color_Map[i][j] == 13)SetColor(0x0D);
+				else if (Color_Map[i][j] == 13)SetColor(0x0D);				
 				cout << Map_main[i][j];
 				SetColor(07);
 			}
@@ -1202,6 +1156,7 @@ public:
 		posX2= 0; posY2 = 0;
 		posX3 = 0; posY3 = 0;
 		posX4 = 0; posY4 = 0;
+		mode = 2;
 		for (int i = 0; i < 5; i++) {
 			this->year[i] = 0;
 			this->month[i] = 0;
@@ -1294,7 +1249,99 @@ public:
 			}
 		}
 	}
-
+	bool save_menu(Player_Tank &pt, enemy &e1, enemy &e2, enemy &e3, enemy &e4, int nu) {
+		system("cls");
+		time_t t = time(0);
+		struct tm * now = localtime(&t);
+		int key;
+		int choise = 0;
+		start(1000, 1000, 15, 20);
+		for (int i = 0; i < 5; i++) {
+			SetPos(5 + 15 * i, 5); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219);
+			SetPos(5 + 15 * i, 5 + 1); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+			SetPos(5 + 15 * i, 5 + 2); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+			SetPos(5 + 15 * i, 5 + 3); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+			SetPos(5 + 15 * i, 5 + 4); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+			SetPos(5 + 15 * i, 5 + 5); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+			SetPos(5 + 15 * i, 5 + 6); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+			SetPos(5 + 15 * i, 5 + 7); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+			SetPos(5 + 15 * i, 5 + 8); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+			SetPos(5 + 15 * i, 5 + 9); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219);
+			SetPos(5 + 15 * i, 5 + 10); SetColor(i == 0 ? 0x0A : 0x0C); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219); SetColor(0x07);
+			SetPos(5 + 15 * i, 5 + 11); SetColor(i == 0 ? 0x0A : 0x0C); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219); SetColor(0x07);
+			SetPos(5 + 15 * i + 3, 5 + 3); cout << this->getDay(i) << "." << this->getMonth(i) << "." << this->getYear(i);
+			SetPos(5 + 15 * i + 3, 5 + 5); cout << this->hour[i] << "." << this->minute[i] << "." << this->second[i];
+		}
+		while (1) {
+			if (_kbhit()) {
+				key = _getch();
+				if (key == 75) {
+					if (choise != 0) choise--;
+					else choise = 4;
+				}
+				else if (key == 77) {
+					if (choise != 4) choise++;
+					else choise = 0;
+				}
+				else if (key == 13) {
+					if (choise == 0 && nu == 1) {
+						this->day[0] = now->tm_mday; this->month[0] = now->tm_mon + 1; this->year[0] = now->tm_year + 1900; this->second[0] = now->tm_sec; this->minute[0] = now->tm_min; this->hour[0] = now->tm_hour;
+						this->saveGame("0.g.", pt, e1, e2, e3, e4);
+						return 1;
+					}
+					else if (choise == 1 && nu == 1) {
+						this->day[1] = now->tm_mday; this->month[1] = now->tm_mon + 1; this->year[1] = now->tm_year + 1900; this->second[1] = now->tm_sec; this->minute[1] = now->tm_min; this->hour[1] = now->tm_hour;
+						this->saveGame("1.g.", pt, e1, e2, e3, e4);
+						return 1;
+					}
+					else if (choise == 2 && nu == 1) {
+						this->day[2] = now->tm_mday; this->month[2] = now->tm_mon + 1; this->year[2] = now->tm_year + 1900; this->second[2] = now->tm_sec; this->minute[2] = now->tm_min; this->hour[2] = now->tm_hour;
+						this->saveGame("2.g.", pt, e1, e2, e3, e4);
+						return 1;
+					}
+					else if (choise == 3 && nu == 1) {
+						this->day[3] = now->tm_mday; this->month[3] = now->tm_mon + 1; this->year[3] = now->tm_year + 1900; this->second[3] = now->tm_sec; this->minute[3] = now->tm_min; this->hour[3] = now->tm_hour;
+						this->saveGame("3.g.", pt, e1, e2, e3, e4);
+						return 1;
+					}
+					else if (choise == 4 && nu == 1) {
+						this->day[4] = now->tm_mday; this->month[4] = now->tm_mon + 1; this->year[4] = now->tm_year + 1900; this->second[4] = now->tm_sec; this->minute[4] = now->tm_min; this->hour[4] = now->tm_hour;
+						this->saveGame("4.g.", pt, e1, e2, e3, e4);
+						return 1;
+					}
+					if (choise == 0 && nu == 0) { this->download_game("0.g.", pt, e1, e2, e3, e4); return 1;}
+					else if (choise == 1 && nu == 0) { this->download_game("1.g.", pt, e1, e2, e3, e4); return 1; }
+					else if (choise == 2 && nu == 0) {this->download_game("2.g.", pt, e1, e2, e3, e4); return 1;}
+					else if (choise == 3 && nu == 0) {this->download_game("3.g.", pt, e1, e2, e3, e4);	return 1;}
+					else if (choise == 4 && nu == 0){ this->download_game("4.g.", pt, e1, e2, e3, e4);	return 1;}
+				}
+				else if (key == 27) {
+					return 0;
+				}
+				else {
+					Sleep(1);
+				}
+				for (int i = 0; i < 5; i++) {
+					SetPos(5 + 15 * i, 5); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219);
+					SetPos(5 + 15 * i, 5 + 1); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+					SetPos(5 + 15 * i, 5 + 2); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+					SetPos(5 + 15 * i, 5 + 3); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+					SetPos(5 + 15 * i, 5 + 4); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+					SetPos(5 + 15 * i, 5 + 5); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+					SetPos(5 + 15 * i, 5 + 6); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+					SetPos(5 + 15 * i, 5 + 7); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+					SetPos(5 + 15 * i, 5 + 8); cout << char(219) << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << " " << char(219);
+					SetPos(5 + 15 * i, 5 + 9); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219);
+					SetPos(5 + 15 * i, 5 + 10); SetColor(i == choise ? 0x0A : 0x0C); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219); SetColor(0x07);
+					SetPos(5 + 15 * i, 5 + 11); SetColor(i == choise ? 0x0A : 0x0C); cout << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219) << char(219); SetColor(0x07);
+					SetPos(5 + 15 * i + 3, 5 + 3); cout << this->getDay(i) << "." << this->getMonth(i) << "." << this->getYear(i);
+					SetPos(5 + 15 * i + 3, 5 + 5); cout << this->hour[i] << "." << this->minute[i] << "." << this->second[i];
+				}
+				
+			}
+		}
+		start(1000, 1000, 5, 4);
+	}
 	
 	void rebild(int y, int x, int nu) {
 		Blok b;
@@ -1358,9 +1405,29 @@ public:
 			i++;
 		}
 	}
-	void download_Bin(string name) {		
+	void download_Bin(string name,int bre) {		
 		ifstream file_Map_r(name, ios::binary);
-		file_Map_r.read((char*)this, sizeof(Map));
+		if (bre == 1) {
+			file_Map_r.read((char*)this->second, sizeof(this->second));
+			file_Map_r.read((char*)this->minute, sizeof(this->minute));
+			file_Map_r.read((char*)this->hour, sizeof(this->hour));
+			file_Map_r.read((char*)this->day, sizeof(this->day));
+			file_Map_r.read((char*)this->month, sizeof(this->month));
+			file_Map_r.read((char*)this->year, sizeof(this->year));
+		}
+		else if (bre == 0) {
+			file_Map_r.read((char*)this->Color_Map, sizeof(this->Color_Map));
+			file_Map_r.read((char*)this->Map_main, sizeof(this->Map_main));
+			file_Map_r.read((char*)&this->posX1, sizeof(this->posX1));
+			file_Map_r.read((char*)&this->posX2, sizeof(this->posX2));
+			file_Map_r.read((char*)&this->posX3, sizeof(this->posX3));
+			file_Map_r.read((char*)&this->posX4, sizeof(this->posX4));
+			file_Map_r.read((char*)&this->posY1, sizeof(this->posY1));
+			file_Map_r.read((char*)&this->posY2, sizeof(this->posY2));
+			file_Map_r.read((char*)&this->posY3, sizeof(this->posY3));
+			file_Map_r.read((char*)&this->posY4, sizeof(this->posY4));
+			file_Map_r.read((char*)&this->mode, sizeof(this->mode));
+		}
 	}
 	void save_Bin() {
 		string name;
@@ -1368,12 +1435,42 @@ public:
 		cout << "The name of the map" << endl;
 		getline(cin, name);
 		ofstream file_Map_w(name, ios::binary);
-		file_Map_w.write((char*)this, sizeof(Map));
+		file_Map_w.write((char*)this->Color_Map, sizeof(this->Color_Map));
+		file_Map_w.write((char*)this->Map_main, sizeof(this->Map_main));
+		file_Map_w.write((char*)&this->posX1, sizeof(this->posX1));
+		file_Map_w.write((char*)&this->posX2, sizeof(this->posX2));
+		file_Map_w.write((char*)&this->posX3, sizeof(this->posX3));
+		file_Map_w.write((char*)&this->posX4, sizeof(this->posX4));
+		file_Map_w.write((char*)&this->posY1, sizeof(this->posY1));
+		file_Map_w.write((char*)&this->posY2, sizeof(this->posY2));
+		file_Map_w.write((char*)&this->posY3, sizeof(this->posY3));
+		file_Map_w.write((char*)&this->posY4, sizeof(this->posY4));
+		file_Map_w.write((char*)&this->mode, sizeof(this->mode));
+		system("cls");
+	}
+	void save_Bin_not_name(string name) {		
+		ofstream file_Map_w(name, ios::binary);
+		file_Map_w.write((char*)this->Color_Map, sizeof(this->Color_Map));
+		file_Map_w.write((char*)this->Map_main, sizeof(this->Map_main));
+		file_Map_w.write((char*)&this->posX1, sizeof(this->posX1));
+		file_Map_w.write((char*)&this->posX2, sizeof(this->posX2));
+		file_Map_w.write((char*)&this->posX3, sizeof(this->posX3));
+		file_Map_w.write((char*)&this->posX4, sizeof(this->posX4));
+		file_Map_w.write((char*)&this->posY1, sizeof(this->posY1));
+		file_Map_w.write((char*)&this->posY2, sizeof(this->posY2));
+		file_Map_w.write((char*)&this->posY3, sizeof(this->posY3));
+		file_Map_w.write((char*)&this->posY4, sizeof(this->posY4));
+		file_Map_w.write((char*)&this->mode, sizeof(this->mode));
 		system("cls");
 	}
 	void save_Bin_just() {
 		ofstream file_Map_w("resume", ios::binary);
-		file_Map_w.write((char*)this, sizeof(Map));
+		file_Map_w.write((char*)this->second, sizeof(this->second));
+		file_Map_w.write((char*)this->minute, sizeof(this->minute));
+		file_Map_w.write((char*)this->hour, sizeof(this->hour));
+		file_Map_w.write((char*)this->day, sizeof(this->day));
+		file_Map_w.write((char*)this->month, sizeof(this->month));
+		file_Map_w.write((char*)this->year, sizeof(this->year));
 		system("cls");
 	}
 	void the_selection_interface() {
@@ -1389,7 +1486,7 @@ public:
 		int choice = 1;
 		while (1) {
 			if (_kbhit()) {
-				key = _getch();
+				key = _getch_nolock();
 				if (key == 72) {
 					if (choice != 1) {
 						choice--;
@@ -1450,56 +1547,158 @@ public:
 			}
 		}
 	}
-	void start_game(int rezh) {		
+	bool sra(Player_Tank pt,enemy e1, enemy e2, enemy e3, enemy e4, int stor) {
+		if (stor == 0) {
+			if (pt.getY() - 5 == e1.getY() && pt.getX()== e1.getX())return 0;
+			if (pt.getY() - 5 == e2.getY() && pt.getX()== e2.getX())return 0;
+			if (pt.getY() - 5 == e3.getY() && pt.getX()== e3.getX())return 0;
+			if (pt.getY() - 5 == e4.getY() && pt.getX()== e4.getX())return 0;
+			else return 1;
+		}
+		else if (stor == 1) {
+			if (pt.getY() == e1.getY() && pt.getX() - 5 == e1.getX())return 0;
+			if (pt.getY() == e2.getY() && pt.getX() - 5 == e2.getX())return 0;
+			if (pt.getY() == e3.getY() && pt.getX() - 5 == e3.getX())return 0;
+			if (pt.getY() == e4.getY() && pt.getX() - 5 == e4.getX())return 0;
+			else return 1;
+		}
+		else if (stor == 2) {
+			if (pt.getY() + 5 == e1.getY() && pt.getX() == e1.getX())return 0;
+			if (pt.getY() + 5 == e2.getY() && pt.getX() == e2.getX())return 0;
+			if (pt.getY() + 5 == e3.getY() && pt.getX() == e3.getX())return 0;
+			if (pt.getY() + 5 == e4.getY() && pt.getX() == e4.getX())return 0;
+			else return 1;
+		}
+		else if (stor == 3) {
+			if (pt.getY() == e1.getY() && pt.getX() + 5 == e1.getX())return 0;
+			if (pt.getY() == e2.getY() && pt.getX() + 5 == e2.getX())return 0;
+			if (pt.getY() == e3.getY() && pt.getX() + 5 == e3.getX())return 0;
+			if (pt.getY() == e4.getY() && pt.getX() + 5 == e4.getX())return 0;
+			else return 1;
+		}
+	}
+	bool sraE(Player_Tank pt, enemy e1, enemy e2, enemy e3, enemy e4, int stor) {
+		if (stor == 0) {
+			if (e1.getY() - 5 == pt.getY() && e1.getX() == pt.getX())return 0;
+			if (e1.getY() - 5 == e2.getY() && e1.getX() == e2.getX())return 0;
+			if (e1.getY() - 5 == e3.getY() && e1.getX() == e3.getX())return 0;
+			if (e1.getY() - 5 == e4.getY() && e1.getX() == e4.getX())return 0;
+			else return 1;													
+		}																	
+		else if (stor == 1) {												
+			if (e1.getY()== pt.getY() && e1.getX() - 5 == pt.getX())return  0;
+			if (e1.getY()== e2.getY() && e1.getX() - 5 == e2.getX())return  0;
+			if (e1.getY()== e3.getY() && e1.getX() - 5 == e3.getX())return  0;
+			if (e1.getY()== e4.getY() && e1.getX() - 5 == e4.getX())return  0;
+			else return 1;													
+		}																	
+		else if (stor == 2) {												
+			if (e1.getY() + 5 == pt.getY() && e1.getX() == pt.getX())return 0;
+			if (e1.getY() + 5 == e2.getY() && e1.getX() == e2.getX())return 0;
+			if (e1.getY() + 5 == e3.getY() && e1.getX() == e3.getX())return 0;
+			if (e1.getY() + 5 == e4.getY() && e1.getX() == e4.getX())return 0;
+			else return 1;													
+		}																	
+		else if (stor == 3) {												
+			if (e1.getY()== pt.getY() && e1.getX() + 5 == pt.getX())return  0;
+			if (e1.getY()== e2.getY() && e1.getX() + 5 == e2.getX())return  0;
+			if (e1.getY()== e3.getY() && e1.getX() + 5 == e3.getX())return  0;
+			if (e1.getY()== e4.getY() && e1.getX() + 5 == e4.getX())return  0;
+			else return 1;
+		}
+	}
+	void scan_to_memory(enemy &e1) {
+		for (int i = 0; i < 20; i++) {
+			for (int j = 0; j < 20; j++) {
+				if (this->getM(i * 5, j * 5, ' ')) {
+					e1.setRam(i,j,1);
+				}
+				else if (this->getM(i * 5, j * 5, char(178))) {
+					e1.setRam(i, j, 2);
+				}
+				else if (this->getM(i * 5, j * 5, char(176))) {
+					e1.setRam(i, j, 4);
+				}
+			}
+		}
+	}
+	void setMode(int m) {
+		this->mode = m;
+	}
+	bool start_game(int rezh) {		
 		Player_Tank pt;
 		enemy e1;
 		enemy e2;
 		enemy e3;
 		enemy e4;
-		/*if (rezh == 2)this->download_game(pt, e1, e2, e3, e4,"179");*/
+		bool annd;	
+		if (this->mode == 2 || this->mode == 3) {
+			this->scan_to_memory(e1);
+		}
+		if (rezh == 2) {
+			annd = this->save_menu(pt, e1, e2, e3, e4, 0);
+			if (annd == 0) {
+				return 0;
+			}
+			else  start(1000, 1000, 5, 4);
+		}		
 		time_t NewTimeMove, OldTimeMove = 0,NewTimeRespawn, OldTimeRespawn = 0, NewTimeRespawnPT, OldTimeRespawnPT = 0;
 		NewTimeMove = clock();
 		bool gg = 0;
+		_COORD a = {1,1};
 		int menu;
 		if (this->posX1 != 0&& rezh != 2 ) { e1.setPos(this->posX1, this->posY1); e1.switchExisting();}
 		if (this->posX2 != 0 && rezh != 2) { e2.setPos(this->posX2, this->posY2); e2.switchExisting();}
 		if (this->posX3 != 0 && rezh != 2) { e3.setPos(this->posX3, this->posY3); e3.switchExisting();}
 		if (this->posX4 != 0 && rezh != 2) { e4.setPos(this->posX4, this->posY4); e4.switchExisting();}
 		this->showStatforgame(e1, 140,0);
-		do {
+		do {			
 			NewTimeRespawnPT=NewTimeRespawn = NewTimeMove = clock();
-			if (kbhit()) {
+			if (kbhit()) {								
 				int key = getch();
-
-				if (key != 224) {
+				if (key == 224)key = getch();				
 					if (key == 72) {
 						pt.setStor(0);
 						if (this->getM(pt.getY() - 5, pt.getX(), ' ')) {
-							this->zater(pt.getY(), pt.getX(), pt, e1,e2,e3,e4, 0);
-							pt.moveUp();
+							if (sra(pt,e1,e2,e3,e4,0)) {
+								this->zater(pt.getY(), pt.getX(), pt, e1, e2, e3, e4, 0);
+								e1.setRam(pt.getY() / 5, pt.getX() / 5, 1);
+								pt.moveUp();
+								e1.setRam(pt.getY() / 5, pt.getX() / 5, 6);
+							}
 						}
 					}
 					else if (key == 80) {
 						pt.setStor(2);
-						if (!this->getM(pt.getY() + 7, pt.getX(), '#')) {
-							if (this->getM(pt.getY() + 5, pt.getX(), ' ')) {
-								this->zater(pt.getY(), pt.getX(), pt, e1, e2, e3, e4, 0);
-								pt.moveDown();
-							}
+						if (sra(pt, e1, e2, e3, e4, 2)){
+						if (this->getM(pt.getY() + 5, pt.getX(), ' ')) {
+							this->zater(pt.getY(), pt.getX(), pt, e1, e2, e3, e4, 0);
+							e1.setRam(pt.getY() / 5, pt.getX() / 5, 1);
+							pt.moveDown();
+							e1.setRam(pt.getY() / 5, pt.getX() / 5, 6);
 						}
+					}
 					}
 					else if (key == 77) {
 						pt.setStor(3);
-						if (this->getM(pt.getY(), pt.getX() + 5, ' ')) {
-							this->zater(pt.getY(), pt.getX(), pt, e1, e2, e3, e4, 0);
-							pt.moveRight();
+						if (sra(pt, e1, e2, e3, e4, 3)) {
+							if (this->getM(pt.getY(), pt.getX() + 5, ' ')) {
+								this->zater(pt.getY(), pt.getX(), pt, e1, e2, e3, e4, 0);
+								e1.setRam(pt.getY() / 5, pt.getX() / 5, 1);
+								pt.moveRight();
+								e1.setRam(pt.getY() / 5, pt.getX() / 5, 6);
+							}
 						}
 					}
 					else if (key == 75) {
 						pt.setStor(1);
-						if (this->getM(pt.getY(), pt.getX() - 5, ' ')) {
-							this->zater(pt.getY(), pt.getX(), pt, e1, e2, e3, e4, 0);
-							pt.moveLeft();
+						if (sra(pt, e1, e2, e3, e4, 1)) {
+							if (this->getM(pt.getY(), pt.getX() - 5, ' ')) {
+								this->zater(pt.getY(), pt.getX(), pt, e1, e2, e3, e4, 0);
+								e1.setRam(pt.getY() / 5, pt.getX() / 5, 1);
+								pt.moveLeft();
+								e1.setRam(pt.getY() / 5, pt.getX() / 5, 6);
+							}
 						}
 					}
 					else if (key == 13) {
@@ -1507,36 +1706,50 @@ public:
 					}
 					else if (key == 27) { menu = menu_in_game(15,15);
 					if (menu == 2) {}
-					else if (menu == 3) {/* this->saveGame(pt,e1,e2,e3,e4);*/ save_menu(pt,e1,e2,e3,e4,1); }
-					else if (menu == 4) { break; }
+					else if (menu == 3) { save_menu(pt,e1,e2,e3,e4,1); start(1000, 1000, 5, 4);	}
+					else if (menu == 4) { start(1000, 1000, 15, 20); return 1; }
 					}
 				}
-			}	
+				
 			if(e1.getLiving() && e1.getExisting())this->ob_enemy(e1,0);
 			if (e2.getLiving() && e2.getExisting())this->ob_enemy(e2, 0);
 			if (e3.getLiving() && e3.getExisting())this->ob_enemy(e3, 0);
 			if (e4.getLiving() && e4.getExisting())this->ob_enemy(e4, 0);
 			if (pt.getLiving())this->ob(pt,pt.getStor(),0);
 			this->showMap();
-			if (NewTimeMove - OldTimeMove >= 450) { 
-				if (e1.getExisting())this->move_enemy(pt, e1, e2, e3, e4, OldTimeMove, 1);
-				if (e2.getExisting())this->move_enemy(pt, e1, e2, e3, e4, OldTimeMove, 2);
-				if (e3.getExisting())this->move_enemy(pt, e1, e2, e3, e4, OldTimeMove, 3);
-				if (e4.getExisting())this->move_enemy(pt, e1, e2, e3, e4, OldTimeMove, 4);
-			}
 			this->zater(pt.getY(), pt.getX(),pt,e1,e2,e3,e4,1);
+			if (NewTimeMove - OldTimeMove >= 450) { 
+				if (this->mode == 1) {
+					if (e1.getExisting())this->move_enemy(pt, e1, e2, e3, e4, OldTimeMove, 1);
+					if (e2.getExisting())this->move_enemy(pt, e1, e2, e3, e4, OldTimeMove, 2);
+					if (e3.getExisting())this->move_enemy(pt, e1, e2, e3, e4, OldTimeMove, 3);
+					if (e4.getExisting())this->move_enemy(pt, e1, e2, e3, e4, OldTimeMove, 4);
+				}
+				else if (this->mode == 2) {
+					if (e1.getExisting())this->move_enemy_hard(pt, e1, e2, e3, e4, OldTimeMove);
+					if (e2.getExisting())this->move_enemy_hard(pt, e2, e1, e3, e4, OldTimeMove);
+					if (e3.getExisting())this->move_enemy_hard(pt, e3, e2, e1, e4, OldTimeMove);
+					if (e4.getExisting())this->move_enemy_hard(pt, e4, e2, e3, e1, OldTimeMove);					
+				}
+				else if (this->mode == 3) {
+					if (e1.getExisting())this->move_eneny_very_hard(pt, e1, e2, e3, e4, OldTimeMove);
+					if (e2.getExisting())this->move_eneny_very_hard(pt, e2, e1, e3, e4, OldTimeMove);
+					if (e3.getExisting())this->move_eneny_very_hard(pt, e3, e2, e1, e4, OldTimeMove);
+					if (e4.getExisting())this->move_eneny_very_hard(pt, e4, e2, e3, e1, OldTimeMove);
+				}
+			}
 			if (e1.getLive() > 0) {
 				if (!e1.getLiving() && e1.getExisting()) {
-					if (NewTimeRespawn - OldTimeRespawn >= 10000) { e1.reverdeadÕ(); e1.setPos(posX1, posY1); }
+					if (NewTimeRespawn - OldTimeRespawn >= 10000) { e1.reverdeadХ(); e1.setPos(posX1, posY1); }
 				}
 				else if (!e2.getLiving() && e2.getExisting()) {
-					if (NewTimeRespawn - OldTimeRespawn >= 10000) { e2.reverdeadÕ(); e2.setPos(posX2, posY2); }
+					if (NewTimeRespawn - OldTimeRespawn >= 10000) { e2.reverdeadХ(); e2.setPos(posX2, posY2); }
 				}
 				else if (!e3.getLiving() && e3.getExisting()) {
-					if (NewTimeRespawn - OldTimeRespawn >= 10000) { e3.reverdeadÕ(); e3.setPos(posX3, posY3); }
+					if (NewTimeRespawn - OldTimeRespawn >= 10000) { e3.reverdeadХ(); e3.setPos(posX3, posY3); }
 				}
 				else if (!e4.getLiving() && e4.getExisting()) {
-					if (NewTimeRespawn - OldTimeRespawn >= 10000) { e4.reverdeadÕ(); e4.setPos(posX4, posY4); }
+					if (NewTimeRespawn - OldTimeRespawn >= 10000) { e4.reverdeadХ(); e4.setPos(posX4, posY4); }
 				}
 			}
 			if (pt.getLive() > 0) {
@@ -1550,9 +1763,10 @@ public:
 			pt.show_hp(0,120);
 			this->serch_base(gg);
 			if (!gg || pt.getLive() <= 0) { this->gameover(15,50); }
+						
 		} while (1);
 	}
-	
+	private:
 	void serch_base(bool &gg) {
 		for (int i = 0; i < 100; i++) {
 			for (int j = 0; j < 100; j++) {
@@ -1567,90 +1781,122 @@ public:
 		kos = rand() % 5;
 	if (kos == 0) {
 		if (this->getM(e1.getY() - 5, e1.getX(), ' ') && num == 1) {
-			this->zater(e1.getY(), e1.getX(),pt,e1,e2,e3,e4, 0);
-		e1.setStor(0);
-			e1.moveUp();
+			if (sraE(pt, e1, e2, e3, e4, 0)) {
+				this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+				e1.setStor(0);
+				e1.moveUp();
+			}
 		}
 		else if (this->getM(e2.getY() - 5, e2.getX(), ' ') && num == 2) {
-			this->zater(e2.getY(), e2.getX(), pt, e1, e2, e3, e4, 0);
-			e2.setStor(0);
-			e2.moveUp();
+			if (sraE(pt, e2, e1, e3, e4, 0)) {
+				this->zater(e2.getY(), e2.getX(), pt, e1, e2, e3, e4, 0);
+				e2.setStor(0);
+				e2.moveUp();
+			}
 		}
 		else if (this->getM(e3.getY() - 5, e3.getX(), ' ') && num == 3) {
-			this->zater(e3.getY(), e3.getX(), pt, e1, e2, e3, e4, 0);
-			e3.setStor(0);
-			e3.moveUp();
+			if (sraE(pt, e3, e2, e1, e4, 0)) {
+				this->zater(e3.getY(), e3.getX(), pt, e1, e2, e3, e4, 0);
+				e3.setStor(0);
+				e3.moveUp();
+			}
 		}
 		else if (this->getM(e4.getY() - 5, e4.getX(), ' ') && num == 4) {
-			this->zater(e4.getY(), e4.getX(), pt, e1, e2, e3, e4, 0);
-			e4.setStor(0);
-			e4.moveUp();
+			if (sraE(pt, e4, e2, e3, e1, 0)) {
+				this->zater(e4.getY(), e4.getX(), pt, e1, e2, e3, e4, 0);
+				e4.setStor(0);
+				e4.moveUp();
+			}
 		}		
 	}
 	else if (kos == 1) {
 		if (this->getM(e1.getY(), e1.getX() - 5, ' ') && num == 1) {
-			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
-		e1.setStor(1);
-			e1.moveLeft();
+			if (sraE(pt, e1, e2, e3, e4, 1)) {
+				this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+				e1.setStor(1);
+				e1.moveLeft();
+			}
 		}
 		else if (this->getM(e2.getY(), e2.getX() - 5, ' ') && num == 2) {
-			this->zater(e2.getY(), e2.getX(), pt, e1, e2, e3, e4, 0);
-			e2.setStor(1);
-			e2.moveLeft();
+			if (sraE(pt, e2, e1, e3, e4, 1)) {
+				this->zater(e2.getY(), e2.getX(), pt, e1, e2, e3, e4, 0);
+				e2.setStor(1);
+				e2.moveLeft();
+			}
 		}
 		else if (this->getM(e3.getY(), e3.getX() - 5, ' ') && num == 3) {
-			this->zater(e3.getY(), e3.getX(), pt, e1, e2, e3, e4, 0);
-			e3.setStor(1);
-			e3.moveLeft();
+			if (sraE(pt, e3, e2, e1, e4, 1)) {
+				this->zater(e3.getY(), e3.getX(), pt, e1, e2, e3, e4, 0);
+				e3.setStor(1);
+				e3.moveLeft();
+			}
 		}
 		else if (this->getM(e4.getY(), e4.getX() - 5, ' ') && num == 4) {
-			this->zater(e4.getY(), e4.getX(), pt, e1, e2, e3, e4, 0);
-			e4.setStor(1);
-			e4.moveLeft();
+			if (sraE(pt, e4, e2, e3, e1, 1)) {
+				this->zater(e4.getY(), e4.getX(), pt, e1, e2, e3, e4, 0);
+				e4.setStor(1);
+				e4.moveLeft();
+			}
 		}
 	}
 	else if (kos == 2) {
 		if (this->getM(e1.getY() + 5, e1.getX(), ' ') && num == 1) {
-			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
-		e1.setStor(2);
-			e1.moveDown();
+			if (sraE(pt, e1, e2, e3, e4, 2)) {
+				this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+				e1.setStor(2);
+				e1.moveDown();
+			}
 		}
 		else if (this->getM(e2.getY() + 5, e2.getX() , ' ') && num == 2) {
-			this->zater(e2.getY(), e2.getX(), pt, e1, e2, e3, e4, 0);
-			e2.setStor(2);
-			e2.moveDown();
+			if (sraE(pt, e2, e1, e3, e4, 2)) {
+				this->zater(e2.getY(), e2.getX(), pt, e1, e2, e3, e4, 0);
+				e2.setStor(2);
+				e2.moveDown();
+			}
 		}
 		else if (this->getM(e3.getY() + 5, e3.getX() , ' ') && num == 3) {
-			this->zater(e3.getY(), e3.getX(), pt, e1, e2, e3, e4, 0);
-			e3.setStor(2);
-			e3.moveDown();
+			if (sraE(pt, e3, e2, e1, e4, 2)) {
+				this->zater(e3.getY(), e3.getX(), pt, e1, e2, e3, e4, 0);
+				e3.setStor(2);
+				e3.moveDown();
+			}
 		}
 		else if (this->getM(e4.getY() + 5, e4.getX() , ' ') && num == 4) {
-			this->zater(e4.getY(), e4.getX(), pt, e1, e2, e3, e4, 0);
-			e4.setStor(2);
-			e4.moveDown();
+			if (sraE(pt, e4, e2, e3, e1, 2)) {
+				this->zater(e4.getY(), e4.getX(), pt, e1, e2, e3, e4, 0);
+				e4.setStor(2);
+				e4.moveDown();
+			}
 		}
 	}
 	else if (kos == 3) {
 		if (this->getM(e1.getY(), e1.getX() + 5, ' ')&& num ==1) {
-			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
-		e1.setStor(3);
-			e1.moveRight();
+			if (sraE(pt, e1, e2, e3, e4, 3)) {
+				this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+				e1.setStor(3);
+				e1.moveRight();
+			}
 		}
 		else if (this->getM(e2.getY() , e2.getX() + 5, ' ') && num == 2) {
-			this->zater(e2.getY(), e2.getX(), pt, e1, e2, e3, e4, 0);
-			e2.setStor(3);
-			e2.moveRight();
+			if (sraE(pt, e2, e1, e3, e4, 3)) {
+				this->zater(e2.getY(), e2.getX(), pt, e1, e2, e3, e4, 0);
+				e2.setStor(3);
+				e2.moveRight();
+			}
 		}
 		else if (this->getM(e3.getY() , e3.getX() + 5, ' ') && num == 3) {
-			this->zater(e3.getY(), e3.getX(), pt, e1, e2, e3, e4,0);
-			e3.setStor(3);
-			e3.moveRight();
+			if (sraE(pt, e3, e2, e1, e4, 3)) {
+				this->zater(e3.getY(), e3.getX(), pt, e1, e2, e3, e4, 0);
+				e3.setStor(3);
+				e3.moveRight();
+			}
 		}
 		else if (this->getM(e4.getY() , e4.getX() + 5, ' ') && num == 4) {
-			this->zater(e4.getY(), e4.getX(), pt, e1, e2, e3, e4,0);
-			e4.setStor(3);
-			e4.moveRight();
+			if (sraE(pt, e4, e2, e3, e1, 3)) {
+				this->zater(e4.getY(), e4.getX(), pt, e1, e2, e3, e4, 0);
+				e4.setStor(3);
+				e4.moveRight();
+			}
 		}
 	}
 	else if (kos == 4) {
@@ -1664,6 +1910,179 @@ public:
 	if (!e2.getLiving() && num == 2) { this->zater(e2.getY(), e2.getX(), pt, e1, e2, e3, e4, 0); e2.setPos(0, 0); }
 	if (!e3.getLiving() && num == 3) { this->zater(e3.getY(), e3.getX(), pt, e1, e2, e3, e4, 0); e3.setPos(0, 0); }
 	if (!e4.getLiving() && num == 4) { this->zater(e4.getY(), e4.getX(), pt, e1, e2, e3, e4, 0); e4.setPos(0, 0); }
+	}
+	int attack_enemy(enemy e1,Player_Tank pt) {
+		int kos = rand() % 3;
+		for (int i = 0; i < 5;i++) {
+			if (e1.getY() + 5*i == pt.getY() && e1.getX() == pt.getX() || this->Map_main[e1.getY() + 5 * i][e1.getX()] == char(4) ) {
+				for (;i >= 0;i--) {
+					if (this->getM(e1.getY() + 5 * i, e1.getX(), char(219)))return 0;
+				}
+				return 3;
+			}
+			else if (this->Map_main[e1.getY() + 5 * i][e1.getX()] == char(178) && kos == 2) {
+				for (; i >= 0; i--) {
+					if (this->getM(e1.getY() + 5 * i, e1.getX() , char(219)))return 0;
+				}
+				return 3;
+			}
+			else if (e1.getX() + 5 * i == pt.getX() && e1.getY() == pt.getY() || this->Map_main[e1.getY()][e1.getX() + 5 * i] == char(4)) {
+				for (; i >= 0; i--) {
+					if (this->getM(e1.getY(), e1.getX() + 5 * i, char(219)))return 0;
+				}
+				return 4;
+			}
+			else if (this->Map_main[e1.getY()][e1.getX() + 5 * i] == char(178) && kos == 2) {
+				for (; i >= 0; i--) {
+					if (this->getM(e1.getY(), e1.getX() + 5 * i, char(219)))return 0;
+				}
+				return 4;
+			}
+			else if (e1.getY() - 5 * i == pt.getY() && e1.getX() == pt.getX() || this->Map_main[e1.getY() - 5 * i][e1.getX()] == char(4) ) {
+				for (; i >= 0; i--) {
+					if (this->getM(e1.getY() - 5 * i, e1.getX(), char(219)))return 0;
+				}
+				return 1;
+			}
+			else if(this->Map_main[e1.getY() - 5 * i][e1.getX()] == char(178) && kos == 2){
+				for (; i >= 0; i--) {
+					if (this->getM(e1.getY() - 5 * i, e1.getX(), char(219)))return 0;
+				}
+				return 1;
+			}
+			else if (e1.getX() - 5 * i == pt.getX() && e1.getY() == pt.getY() || this->Map_main[e1.getY()][e1.getX() - 5 * i] == char(4) ) {
+				for (; i >= 0; i--) {
+					if (this->getM(e1.getY(), e1.getX() - 5 * i, char(219)))return 0;
+				}
+				return 2;
+			}
+			else if (this->Map_main[e1.getY()][e1.getX() - 5 * i] == char(178) && kos == 2) {
+				for (; i >= 0; i--) {
+					if (this->getM(e1.getY(), e1.getX() - 5 * i, char(219)))return 0;
+				}
+				return 2;
+			}
+		}		
+		return 0;
+	}
+	void move_eneny_very_hard(Player_Tank &pt, enemy &e1, enemy &e2, enemy &e3, enemy &e4, time_t &t) {
+		e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 2);
+		e1.setRam(e1.getY() / 5, e1.getX() / 5, 5);
+		int h = this->attack_enemy(e1, pt);
+		if (h) {
+			if (h == 1) { e1.setStor(0); this->ob_enemy(e1, 1); }
+			else if (h == 2) { e1.setStor(1); this->ob_enemy(e1, 1); }
+			else if (h == 3) { e1.setStor(2); this->ob_enemy(e1, 1); }
+			else if (h == 4) { e1.setStor(3); this->ob_enemy(e1, 1); }
+		}
+		else if (e1.getMemory(e1.getY() / 5 + 1, e1.getX() / 5) == 1 && e1.getY() < pt.getY()) {
+			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+			e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+			e1.setStor(2);
+			e1.moveDown();
+		}
+		else if (e1.getMemory(e1.getY() / 5 - 1, e1.getX() / 5) == 1 && e1.getY() > pt.getY()) {
+			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+			e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+			e1.setStor(0);
+			e1.moveUp();
+		}
+		else if (e1.getMemory(e1.getY() / 5, e1.getX() / 5 + 1) == 1 && e1.getX() < pt.getX()) {
+			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+			e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+			e1.setStor(3);
+			e1.moveRight();
+		}
+		else if (e1.getMemory(e1.getY() / 5 + 1, e1.getX() / 5 - 1) == 1 && e1.getX() > pt.getX()) {
+			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+			e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+			e1.setStor(1);
+			e1.moveLeft();
+		}
+		else {
+			int ran = rand() % 4;
+			if (ran == 0 && e1.getMemory(e1.getY() / 5 + 1, e1.getX() / 5) == 1) {
+				this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+				e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+				e1.setStor(2);
+				e1.moveDown();
+			}
+			else if (ran == 1 && e1.getMemory(e1.getY() / 5 - 1, e1.getX() / 5) == 1) {
+				this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+				e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+				e1.setStor(0);
+				e1.moveUp();
+			}
+			else if (ran == 2 && e1.getMemory(e1.getY() / 5, e1.getX() / 5 + 1) == 1) {
+				this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+				e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+				e1.setStor(3);
+				e1.moveRight();
+			}
+			else if (ran == 3 && e1.getMemory(e1.getY() / 5, e1.getX() / 5 - 1) == 1) {
+				this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+				e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+				e1.setStor(1);
+				e1.moveLeft();
+			}
+		}
+		t = clock();
+		if (!e1.getLiving()) { this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0); e1.setPos(0, 0); }
+	}
+	void move_enemy_hard(Player_Tank &pt, enemy &e1, enemy &e2, enemy &e3, enemy &e4, time_t &t) {
+		e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 2);
+		e1.setRam(e1.getY() / 5, e1.getX() / 5,5);
+		int h = this->attack_enemy(e1, pt);
+		if (h) {
+			if (h == 1) { e1.setStor(0); this->ob_enemy(e1, 1); }
+			else if (h == 2) { e1.setStor(1); this->ob_enemy(e1, 1);}
+			else if (h == 3) { e1.setStor(2); this->ob_enemy(e1, 1);}
+			else if (h == 4) { e1.setStor(3); this->ob_enemy(e1, 1);}
+		}
+		else if(e1.getMemory(e1.getY() / 5 + 1, e1.getX() / 5) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 + 1, e1.getX() / 5) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 + 1, e1.getX() / 5) != 4) {
+			if (e1.getMemory(e1.getY() / 5 - 1, e1.getX() / 5) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 - 1, e1.getX() / 5) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 - 1, e1.getX() / 5) != 4)e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 4);
+			if (e1.getMemory(e1.getY() / 5, e1.getX() / 5 + 1) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 , e1.getX() / 5 + 1) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 + 1) != 4)e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 4);
+			if (e1.getMemory(e1.getY() / 5, e1.getX() / 5 - 1) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 - 1) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 - 1) != 4)e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 4);
+			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+			e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+			e1.setStor(2);
+			e1.moveDown();
+		}
+		else if (e1.getMemory(e1.getY() / 5 - 1, e1.getX() / 5) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 - 1, e1.getX() / 5) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 - 1, e1.getX() / 5) != 4) {
+			if (e1.getMemory(e1.getY() / 5 + 1, e1.getX() / 5) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 + 1, e1.getX() / 5) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 + 1, e1.getX() / 5) != 4)e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 4);
+			if (e1.getMemory(e1.getY() / 5, e1.getX() / 5 + 1) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 + 1) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 + 1) != 4)e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 4);
+			if (e1.getMemory(e1.getY() / 5, e1.getX() / 5 - 1) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 - 1) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 - 1) != 4)e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 4);
+			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+			e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+			e1.setStor(0);
+			e1.moveUp();
+		}
+		else if (e1.getMemory(e1.getY() / 5 , e1.getX() / 5 + 1) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 + 1) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 , e1.getX() / 5 + 1) != 4) {
+			if (e1.getMemory(e1.getY() / 5 - 1, e1.getX() / 5) == 1  && e1.getMap_of_the_area_in_memory(e1.getY() / 5 - 1, e1.getX() / 5) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 - 1, e1.getX() / 5) !=4 )e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 4);
+			if (e1.getMemory(e1.getY() / 5 + 1, e1.getX() / 5) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 + 1, e1.getX() / 5) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 + 1, e1.getX() / 5) !=4 )e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 4);
+			if (e1.getMemory(e1.getY() / 5, e1.getX() / 5 - 1) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 - 1) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 - 1) !=4 )e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5, 4);
+			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+			e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+			e1.setStor(3);			
+			e1.moveRight();
+		}
+		else if (e1.getMemory(e1.getY() / 5 , e1.getX() / 5 - 1) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 - 1) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 , e1.getX() / 5 - 1) != 4) {
+			if (e1.getMemory(e1.getY() / 5 - 1, e1.getX() / 5) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 - 1, e1.getX() / 5) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 - 1, e1.getX() / 5) != 4)e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getY() / 5, 4);
+			if (e1.getMemory(e1.getY() / 5, e1.getX() / 5 + 1) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 + 1) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5, e1.getX() / 5 + 1) != 4)e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getY() / 5, 4);
+			if (e1.getMemory(e1.getY() / 5 + 1, e1.getX() / 5) == 1 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 + 1, e1.getX() / 5) != 2 && e1.getMap_of_the_area_in_memory(e1.getY() / 5 + 1, e1.getX() / 5) != 4)e1.setmap_of_the_area_in_memory(e1.getY() / 5, e1.getY() / 5, 4);
+			this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0);
+			e1.setRam(e1.getY() / 5, e1.getX() / 5, 1);
+			e1.setStor(1);
+			e1.moveLeft();
+		}
+		else {
+			e1.deadlock(e1.getY() / 5,e1.getX() / 5);
+		}
+		if (e1.getMap_of_the_area_in_memory(e1.getY(), e1.getX()) == 4) {
+
+		}
+		t = clock();
+		if (!e1.getLiving() ) { this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0); e1.setPos(0, 0); }	
 	}
 
 	void ob(Player_Tank pt, int stor,int ar) {				
@@ -1702,10 +2121,10 @@ public:
 					}
 				}
 				else {
-					if (e.stor() == 0 && !this->getM(e.getY() - 2, e.getX() + 2, char(219))) { this->Map_main[e.getY() - 2][e.getX() + 2] = char(223); break; }
-					if (e.stor() == 1 && !this->getM(e.getY() + 2, e.getX() - 2, char(219))) { this->Map_main[e.getY() + 2][e.getX() - 2] = char(221); break;	}
-					if (e.stor() == 2 && !this->getM(e.getY() + 6, e.getX() + 2, char(219))) { this->Map_main[e.getY() + 6][e.getX() + 2] = char(220); break;	}
-					if (e.stor() == 3 && !this->getM(e.getY() + 2, e.getX() + 6, char(219))) { this->Map_main[e.getY() + 2][e.getX() + 6] = char(222); break; }
+					if (e.stor() == 0 && !this->getM(e.getY() - 2, e.getX() + 2, char(219))) {this->Color_Map[e.getY() - 2][e.getX() + 2] = 15; this->Map_main[e.getY() - 2][e.getX() + 2] = char(223); break;}
+					if (e.stor() == 1 && !this->getM(e.getY() + 2, e.getX() - 2, char(219))) { this->Color_Map[e.getY() + 2][e.getX() - 2] = 15; this->Map_main[e.getY() + 2][e.getX() - 2] = char(221); break;	}
+					if (e.stor() == 2 && !this->getM(e.getY() + 6, e.getX() + 2, char(219))) { this->Color_Map[e.getY() + 6][e.getX() + 2] = 15; this->Map_main[e.getY() + 6][e.getX() + 2] = char(220); break;	}
+					if (e.stor() == 3 && !this->getM(e.getY() + 2, e.getX() + 6, char(219))) { this->Color_Map[e.getY() + 2][e.getX() + 6] = 15; this->Map_main[e.getY() + 2][e.getX() + 6] = char(222); break; }
 				}
 			}
 		}
@@ -1721,11 +2140,12 @@ public:
 							this->Map_main[x + h][y + hh] = ' ';
 						}
 					}
-				}						
+				}
 				if (bre == 1) {
 					if (this->Map_main[i][j] == char(223)) {//char(223)	
-						if (this->getM(i - 5, j, char(176)) || this->getM(i - 5, j, ' ') && !this->getM(i - 1, j, char(178)) && !(pt.getX() == j - 2 && pt.getY() == i - 8))this->Map_main[i - 5][j] = char(223);
-
+						if ((this->getM(i - 5, j, char(176)) || this->getM(i - 5, j, ' ')) && !this->getM(i - 1, j, char(178)) && !(pt.getX() == j - 2 && pt.getY() == i - 8)) {
+							this->Map_main[i - 5][j] = char(223); this->Color_Map[i - 5][j] = this->Color_Map[i][j];
+						}
 						else if (this->getM(i - 1, j, char(178))) {
 							if (this->Color_Map[i - 3][j - 1] == 12) {
 								for (int b = 0; b < 5; b++) {
@@ -1753,44 +2173,33 @@ public:
 						}
 						else if (pt.getX() == j - 2 && pt.getY() == i - 8) {
 							pt.setLiving(false);
-							--pt;
+							--pt; pt.setPos(0, 0);
 						}
-						else if (pt.getX() == j - 2 && pt.getY() == i - 3) {
-							pt.setLiving(false);
-							--pt;
-						}
-						else if (e.getX() == j - 2 && e.getY() == i - 8  ) {
-							e.deadÕ();
+						
+						else if (e.getX() == j - 2 && e.getY() == i - 8 && this->Color_Map[i][j] != 15) {
+							e.deadХ();
 							--e;
+							e.delete_map_of_the_area_in_memory();
 						}
-						else if (e.getX() == j - 2 && e.getY() == i - 3   ) {
-							e.deadÕ();
-							--e;
-						}
-						else if (e2.getX() == j - 2 && e2.getY() == i - 8 ) {
-							e2.deadÕ();
+						
+						else if (e2.getX() == j - 2 && e2.getY() == i - 8 && this->Color_Map[i][j] != 15) {
+							e2.deadХ();
 							--e2;
+							e2.delete_map_of_the_area_in_memory();
 						}
-						else if (e2.getX() == j - 2 && e2.getY() == i - 3 ) {
-							e2.deadÕ();
-							--e2;
-						}
-						else if (e3.getX() == j - 2 && e3.getY() == i - 8 ) {
-							e3.deadÕ();
+						
+						else if (e3.getX() == j - 2 && e3.getY() == i - 8 && this->Color_Map[i][j] != 15) {
+							e3.deadХ();
 							--e3;
+							e3.delete_map_of_the_area_in_memory();
 						}
-						else if (e3.getX() == j - 2 && e3.getY() == i - 3 ) {
-							e3.deadÕ();
-							--e3;
-						}
-						else if (e4.getX() == j - 2 && e4.getY() == i - 8 ) {
-							e4.deadÕ();
+						
+						else if (e4.getX() == j - 2 && e4.getY() == i - 8 && this->Color_Map[i][j] != 15) {
+							e4.deadХ();
 							--e4;
+							e4.delete_map_of_the_area_in_memory();
 						}
-						else if (e4.getX() == j - 2 && e4.getY() == i - 3 ) {
-							e4.deadÕ();
-							--e4;
-						}
+						
 						else if (this->getM(i - 5, j, char(178))) {
 							if (this->Color_Map[i - 8][j - 1] == 12) {
 								for (int b = 0; b < 5; b++) {
@@ -1809,9 +2218,12 @@ public:
 							}
 						}
 						this->Map_main[i][j] = this->Map_main[i][j + 1];
+						this->Color_Map[i][j] = this->Color_Map[i][j + 1];
 					}//char(223)
 					if (this->Map_main[i][j] == char(221)) {//char(221)	
-						if (this->getM(i, j - 5, char(176)) || this->getM(i, j - 5, ' ') && !this->getM(i, j - 1, char(178)))this->Map_main[i][j - 5] = char(221);
+						if ((this->getM(i, j - 5, char(176)) || this->getM(i, j - 5, ' ')) && !this->getM(i, j - 1, char(178))) {
+							this->Map_main[i][j - 5] = char(221); this->Color_Map[i][j - 5] = this->Color_Map[i][j];
+						}
 						else if (this->getM(i, j - 1, char(178))) {
 							if (this->Color_Map[i - 2][j - 2] == 12) {
 								for (int b = 0; b < 5; b++) {
@@ -1839,44 +2251,33 @@ public:
 						}
 						else if (pt.getX() == j - 8 && pt.getY() == i - 2) {
 							pt.setLiving(false);
-							--pt;
+							--pt; pt.setPos(0, 0);
 						}
-						else if (pt.getX() == j - 3 && pt.getY() == i - 2) {
-							pt.setLiving(false);
-							--pt;
-						}
-						else if (e.getX() == j - 8 && e.getY() == i - 2 ) {
-							e.deadÕ();
+						
+						else if (e.getX() == j - 8 && e.getY() == i - 2 && this->Color_Map[i][j] != 15) {
+							e.deadХ();
 							--e;
+							e.delete_map_of_the_area_in_memory();
 						}
-						else if (e.getX() == j - 3 && e.getY() == i - 2 ) {
-							e.deadÕ();
-							--e;
-						}
-						else if (e2.getX() == j - 8 && e2.getY() == i - 2 ) {
-							e2.deadÕ();
+						
+						else if (e2.getX() == j - 8 && e2.getY() == i - 2 && this->Color_Map[i][j] != 15) {
+							e2.deadХ();
 							--e2;
+							e2.delete_map_of_the_area_in_memory();
 						}
-						else if (e2.getX() == j - 3 && e2.getY() == i - 2) {
-							e2.deadÕ();
-							--e2;
-						}
-						else if (e3.getX() == j - 8 && e3.getY() == i - 2) {
-							e3.deadÕ();
+						
+						else if (e3.getX() == j - 8 && e3.getY() == i - 2 && this->Color_Map[i][j] != 15) {
+							e3.deadХ();
 							--e3;
+							e3.delete_map_of_the_area_in_memory();
 						}
-						else if (e3.getX() == j - 3 && e3.getY() == i - 2 ) {
-							e3.deadÕ();
-							--e3;
-						}
-						else if (e4.getX() == j - 8 && e4.getY() == i - 2 ) {
-							e4.deadÕ();
+						
+						else if (e4.getX() == j - 8 && e4.getY() == i - 2 && this->Color_Map[i][j] != 15) {
+							e4.deadХ();
 							--e4;
+							e4.delete_map_of_the_area_in_memory();
 						}
-						else if (e4.getX() == j - 3&& e4.getY() == i - 2) {
-							e4.deadÕ();
-							--e4;
-						}
+					
 						else if (this->getM(i, j - 5, char(178))) {
 							if (this->Color_Map[i - 2][j - 7] == 12) {
 								for (int b = 0; b < 5; b++) {
@@ -1895,9 +2296,10 @@ public:
 							}
 						}
 						this->Map_main[i][j] = this->Map_main[i][j + 1];
+						this->Color_Map[i][j] = this->Color_Map[i][j + 1];
 					}//char(221)					
 					if (this->Map_main[i][j] == char(220) && i != bufI) {//char(220)	
-						if (this->getM(i + 5, j, char(176)) || this->getM(i + 5, j, ' ') && !this->getM(i + 1, j, char(178)) && !(pt.getX() == j - 2 && pt.getY() == i + 4)) { this->Map_main[i + 5][j] = char(220); bufI = i + 5; }
+						if ((this->getM(i + 5, j, char(176)) || this->getM(i + 5, j, ' ')) && !this->getM(i + 1, j, char(178)) && !(pt.getX() == j - 2 && pt.getY() == i + 4)) { this->Color_Map[i + 5][j] = this->Color_Map[i][j]; this->Map_main[i + 5][j] = char(220); bufI = i + 5; }
 
 						else if (this->getM(i + 1, j, char(178))) {
 							if (this->Color_Map[i - 1][j - 1] == 12) {
@@ -1927,43 +2329,28 @@ public:
 						else if (pt.getX() == j - 2 && pt.getY() == i + 4) {
 							pt.setLiving(false);
 							--pt;
-						}
-						else if (pt.getX() == j - 2 && pt.getY() == i - 1) {
-							pt.setLiving(false);
-							--pt;
-						}
-						else if (e.getX() == j - 2 && e.getY() == i + 4  )  {
-							e.deadÕ();
+							pt.setPos(0,0);
+						}						
+						else if (e.getX() == j - 2 && e.getY() == i + 4 && this->Color_Map[i][j] != 15) {
+							e.deadХ();
 							--e;
-						}
-						else if (e.getX() == j - 2 && e.getY() == i - 1 )   {
-							e.deadÕ();
-							--e;
-						}
-						else if (e2.getX() == j - 2 && e2.getY() == i + 4 ) {
-							e2.deadÕ();
+							e.delete_map_of_the_area_in_memory();
+						}						
+						else if (e2.getX() == j - 2 && e2.getY() == i + 4 && this->Color_Map[i][j] != 15) {
+							e2.deadХ();
 							--e2;
-						}
-						else if (e2.getX() == j - 2 && e2.getY() == i - 1 ) {
-							e2.deadÕ();
-							--e2;
-						}
-						else if (e3.getX() == j - 2 && e3.getY() == i + 4 ) {
-							e3.deadÕ();
+							e2.delete_map_of_the_area_in_memory();
+						}						
+						else if (e3.getX() == j - 2 && e3.getY() == i + 4 && this->Color_Map[i][j] != 15) {
+							e3.deadХ();
 							--e3;
-						}
-						else if (e3.getX() == j - 2 && e3.getY() == i - 1 ) {
-							e3.deadÕ();
-							--e3;
-						}
-						else if (e4.getX() == j - 2 && e4.getY() == i + 4 ) {
-							e4.deadÕ();
+							e3.delete_map_of_the_area_in_memory();
+						}					
+						else if (e4.getX() == j - 2 && e4.getY() == i + 4 && this->Color_Map[i][j] != 15) {
+							e4.deadХ();
 							--e4;
-						}
-						else if (e4.getX() == j - 2 && e4.getY() == i - 1) {
-							e4.deadÕ();
-							--e4;
-						}
+							e4.delete_map_of_the_area_in_memory();
+						}						
 						else if (this->getM(i + 5, j, char(178))) {
 							if (this->Color_Map[i + 7][j] == 12) {
 								for (int b = 0; b < 5; b++) {
@@ -1982,12 +2369,12 @@ public:
 							}
 						}
 						this->Map_main[i][j] = this->Map_main[i][j + 1];
-					}//char(220)		
-
+						this->Color_Map[i][j] = this->Color_Map[i][j + 1];
+					}//char(220)
 					if (this->Map_main[i][j] == char(222) && j != bufJ) {//char(222)	
-						if (this->getM(i, j + 5, char(176)) || this->getM(i, j + 5, ' ') && !this->getM(i, j + 1, char(178)) && !(pt.getX() == j + 8 && pt.getY() == i - 2)) { this->Map_main[i][j + 5] = char(222); bufJ = j + 5; }
+						if ((this->getM(i, j + 5, char(176)) || this->getM(i, j + 5, ' ')) && !this->getM(i, j + 1, char(178)) && !(pt.getX() == j + 8 && pt.getY() == i - 2)) { this->Color_Map[i][j + 5] = this->Color_Map[i][j]; this->Map_main[i][j + 5] = char(222); bufJ = j + 5; }
 
-						else if (this->getM(i + 1, j, char(178))) {
+						else if (this->getM(i, j + 1, char(178))) {
 							if (this->Color_Map[i - 2][j] == 12) {
 								for (int b = 0; b < 5; b++) {
 									for (int bb = 0; bb < 5; bb++) {
@@ -2004,7 +2391,7 @@ public:
 								}
 							}
 						}
-						else if (this->getM(i + 1, j, char(178))) {
+						else if (this->getM(i , j + 5, char(4))) {
 							for (int b = 0; b < 5; b++) {
 								for (int bb = 0; bb < 5; bb++) {
 									this->Color_Map[i + b - 2][j + bb + 4] = 7;
@@ -2014,44 +2401,28 @@ public:
 						}
 						else if (pt.getX() == j + 4 && pt.getY() == i - 2) {
 							pt.setLiving(false);
-							--pt;
-						}
-						else if (pt.getX() == j - 3 && pt.getY() == i - 2) {
-							pt.setLiving(false);
-							--pt;
-						}
-						else if (e.getX() == j + 4 && e.getY() == i - 2  ) {
-							e.deadÕ();
+							--pt; pt.setPos(0, 0);
+						}						
+						else if (e.getX() == j + 4 && e.getY() == i - 2 && this->Color_Map[i][j] != 15) {
+							e.deadХ();
 							--e;
-						}
-						else if (e.getX() == j - 3 && e.getY() == i - 2 )  {
-							e.deadÕ();
-							--e;
-						}
-						else if (e2.getX() == j + 4 && e2.getY() == i - 2) {
-							e2.deadÕ();
+							e.delete_map_of_the_area_in_memory();
+						}						
+						else if (e2.getX() == j + 4 && e2.getY() == i - 2 && this->Color_Map[i][j] != 15) {
+							e2.deadХ();
 							--e2;
-						}
-						else if (e2.getX() == j - 3 && e2.getY() == i - 2) {
-							e2.deadÕ();
-							--e2;
-						}
-						else if (e3.getX() == j + 4 && e3.getY() == i - 2) {
-							e3.deadÕ();
+							e2.delete_map_of_the_area_in_memory();
+						}						
+						else if (e3.getX() == j + 4 && e3.getY() == i - 2 && this->Color_Map[i][j] != 15) {
+							e3.deadХ();
 							--e3;
-						}
-						else if (e3.getX() == j - 3 && e3.getY() == i - 2) {
-							e3.deadÕ();
-							--e3;
-						}
-						else if (e4.getX() == j + 4 && e4.getY() == i - 2) {
-							e4.deadÕ();
+							e3.delete_map_of_the_area_in_memory();
+						}						
+						else if (e4.getX() == j + 4 && e4.getY() == i - 2 && this->Color_Map[i][j] != 15) {
+							e4.deadХ();
 							--e4;
-						}
-						else if (e4.getX() == j - 3 && e4.getY() == i - 2 ) {
-							e4.deadÕ();
-							--e4;
-						}
+							e4.delete_map_of_the_area_in_memory();
+						}						
 						else if (this->getM(i, j + 5, char(178))) {
 							if (this->Color_Map[i][j + 5] == 12) {
 								for (int b = 0; b < 5; b++) {
@@ -2059,7 +2430,7 @@ public:
 										this->Color_Map[i + b - 2][j + bb + 4] = 4;
 									}
 								}
-							}
+							} 
 							else {
 								for (int b = 0; b < 5; b++) {
 									for (int bb = 0; bb < 5; bb++) {
@@ -2070,11 +2441,12 @@ public:
 							}
 						}
 						this->Map_main[i][j] = this->Map_main[i][j + 1];
+						this->Color_Map[i][j] = this->Color_Map[i][j + 1];
 					}//char(222)		
 				}
-				}
-				
-			}			
+			}
+
+		}
 		};
 	
 };
