@@ -2082,6 +2082,7 @@ private:
     if (e1.getMap_of_the_area_in_memory(e1.getY(), e1.getX()) == 4) {
 
     }
+    e1.setRam(e1.getY() / 5, e1.getX() / 5, 0);
     t = clock();
     if (!e1.getLiving()) { this->zater(e1.getY(), e1.getX(), pt, e1, e2, e3, e4, 0); e1.setPos(0, 0); }
   }
